@@ -72,4 +72,4 @@ alter table employees add constraint fk_employees_departments
     foreign key (department_id) references departments(department_id);
 
 insert into employees (first_name, department_id, email, gender, notes, employment_date, designation) 
-    VALUES ("Tan Ah Kow", 4, "ahkow@asd.com", 'm', 'Newbie', curdate(), 'Intern');
+    VALUES ("Tan Ah Kow", 3, "ahkow@asd.com", 'm', 'Newbie', curdate(), 'Intern');
