@@ -42,3 +42,34 @@ update employees set email="asd@gmail.com" where employee_id = 1;
 
 # delete one row
 delete from employees where employee_id=1;
+
+# create the departments table
+create table departments (
+    department_id int unsigned auto_increment primary key,
+    name varchar(100)
+) engine = innodb;
+
+# add a new column to an existing table
+alter table employees add column name varchar(100);
+ALTER TABLE employees RENAME COLUMN name TO first_name;
+
+# insert two or three departments
+insert into departments (name) values ("Accounting"),("Human Resources"), ("IT");
+
+# insert an employee with first name
+insert into employees (
+    first_name, email, gender, notes, employment_date, designation
+) values ('Tan Ah Kow', 'asd@asd.com', 'm', 'Newbie', curdate(), "Intern");
+
+# delete existing employee (so that we can add in the foregin key)
+delete from employees;
+
+# add a fk between employees and departments
+# step 1: add the column
+alter table employees add column department_id int unsigned not null;
+# step 2: indicate the newly added column to be a FK
+alter table employees add constraint fk_employees_departments
+    foreign key (department_id) references departments(department_id);
+
+insert into employees (first_name, department_id, email, gender, notes, employment_date, designation) 
+    VALUES ("Tan Ah Kow", 4, "ahkow@asd.com", 'm', 'Newbie', curdate(), 'Intern');
