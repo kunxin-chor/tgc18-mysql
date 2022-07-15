@@ -31,32 +31,44 @@ from
  products join orderdetails 
    on products.productCode = orderdetails.productCode;
 
-## AGGREGATE FUNCTIONS
+-- q7
+select customerName, country, sum(amount) from payments
+join customers on payments.customerNumber = customers.customerNumber
+where country = "USA"
+group by customerName, country
 
--- count how many rows there are in employees table
-select count(*) from employees;
+-- grouping by customerNumber ensures no issues when there are two customers with the same name
+select payments.customerNumber, customerName, sum(amount) from payments join customers
+	on payments.customerNumber = customers.customerNumber
+group by payments.customerNumber, customerName
 
--- sum: add up the value of a specific column across all the rows
-SELECT sum(quantityOrdered) from orderdetails
+-- q8
+select state, count(*) AS "employee_count" from employees
+join offices on employees.officeCode = offices.officeCode
+where country = "USA"
+group by state 
 
--- you could filter the rows, or join the table, before using aggregate functions
-SELECT sum(quantityOrdered) FROM orderdetails
-	WHERE productCode = "S18_1749"
+-- q9
+select avg(amount), customerName from customers join payments
+	on customers.customerNumber = payments.customerNumber
+group by payments.customerNumber, customerName
 
-SELECT sum(quantityOrdered * priceEach) FROM orderdetails
-	WHERE productCode = "S18_1749"
+-- q10
+select avg(amount), customerName from customers join payments
+	on customers.customerNumber = payments.customerNumber
+group by payments.customerNumber, customerName
+having sum(amount) >= 10000
 
-SELECT sum(quantityOrdered * priceEach) AS "Total Worth Ordered" FROM orderdetails
-	WHERE productCode = "S18_1749"
+-- q11
+select orderdetails.productCode, productName, count(*) FROM
+	orderdetails join products on orderdetails.productCode = products.productCode
+group by orderdetails.productCode, productName
+order by count(*) DESC
+limit 10;
 
--- count how many customers there are with sales reps
-select count(*) from customers join employees
-on customers.salesRepEmployeeNumber = employees.employeeNumber
-
--- find the total amount paid by customers in the month of June 2003
-select sum(amount) from payments where paymentDate between '2003-06-01' AND '2003-06-30'
-
--- alternative: find the total amount paid by customers in the month of June 2003
-select sum(amount) from payments where month(paymentDate) = 6 and year(paymentDate) = 2003s
-
-
+-- alternatively:
+select orderdetails.productCode, productName, count(*) as "times_ordered" FROM
+	orderdetails join products on orderdetails.productCode = products.productCode
+group by orderdetails.productCode, productName
+order by times_ordered DESC
+limit 10;

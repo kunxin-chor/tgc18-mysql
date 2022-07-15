@@ -107,3 +107,88 @@ select checkNumber, YEAR(paymentDate) FROM payments WHERE YEAR(paymentDate) = 20
 
 -- display the month, year and day for each payment made
 select checkNumber, YEAR(paymentDate), MONTH(paymentDate), DAY(paymentDate) FROM payments
+
+## AGGREGATE FUNCTIONS
+
+-- count how many rows there are in employees table
+select count(*) from employees;
+
+-- sum: add up the value of a specific column across all the rows
+SELECT sum(quantityOrdered) from orderdetails
+
+-- you could filter the rows, or join the table, before using aggregate functions
+SELECT sum(quantityOrdered) FROM orderdetails
+	WHERE productCode = "S18_1749"
+
+SELECT sum(quantityOrdered * priceEach) FROM orderdetails
+	WHERE productCode = "S18_1749"
+
+SELECT sum(quantityOrdered * priceEach) AS "Total Worth Ordered" FROM orderdetails
+	WHERE productCode = "S18_1749"
+
+-- count how many customers there are with sales reps
+select count(*) from customers join employees
+on customers.salesRepEmployeeNumber = employees.employeeNumber
+
+-- find the total amount paid by customers in the month of June 2003
+select sum(amount) from payments where paymentDate between '2003-06-01' AND '2003-06-30'
+
+-- alternative: find the total amount paid by customers in the month of June 2003
+select sum(amount) from payments where month(paymentDate) = 6 and year(paymentDate) = 2003s
+
+-- GROUP BYs
+-- count how many customers there are per country
+SELECT country, count(*) from customers
+GROUP BY country
+
+-- get the credit limit of all customers per country
+SELECT country, avg(creditLimit) from customers
+GROUP BY country
+
+-- show the avg credit limit and the number of customers per country
+SELECT country, avg(creditLimit) AS "average_credit_limit", count(*) AS "customer_count" from customers
+GROUP BY country;
+
+-- filtering the groups using HAVING
+select country, count(*) from customers
+group by country
+  having count(*) > 5
+
+SELECT country, firstName, lastName, email, avg(creditLimit), count(*) FROM customers
+JOIN employees on customers.salesRepEmployeeNumber = employees.employeeNumber
+WHERE salesRepEmployeeNumber = 1504
+GROUP BY country, firstName, lastName, email;
+
+-- plus sorting
+SELECT country, firstName, lastName, email, avg(creditLimit), count(*) FROM customers
+JOIN employees on customers.salesRepEmployeeNumber = employees.employeeNumber
+WHERE salesRepEmployeeNumber = 1504
+GROUP BY country, firstName, lastName, email
+ORDER BY avg(creditLimit)
+
+-- plus only the top 3
+SELECT country, firstName, lastName, email, avg(creditLimit), count(*) FROM customers
+JOIN employees on customers.salesRepEmployeeNumber = employees.employeeNumber
+WHERE salesRepEmployeeNumber = 1504
+GROUP BY country, firstName, lastName, email
+ORDER BY avg(creditLimit) DESC
+LIMIT 3
+
+-- SUB QUERIES
+-- show the product code of the product that has been ordered the most time
+select productCode from (select orderdetails.productCode, productName, count(*) as "times_ordered" FROM
+	orderdetails join products on orderdetails.productCode = products.productCode
+group by orderdetails.productCode, productName
+order by times_ordered DESC
+limit 1) AS sub;
+
+-- find all customers whose credit limit is above the average
+-- when the select only returns one value, it will be treated as a primitive
+select * from customers where creditLimit > (SELECT avg(creditLimit) FROM customers)
+
+-- show all sales rep who made more than 10% of the payment amount
+select employeeNumber, sum(amount) from employees join customers
+  on employees.employeeNumber = customers.salesRepEmployeeNumber
+  JOIN payments on customers.customerNumber = payments.customerNumber
+ group by employees.employeeNumber
+ having sum(amount) > (select sum(amount) * 0.1 from payments) 
