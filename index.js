@@ -34,6 +34,13 @@ async function main() {
             'actors': actors
         })
     })
+
+    app.get('/staff', async function (req,res){
+        const [staff] = await connection.execute('SELECT staff_id, first_name, last_name, email from staff');
+        res.render('staff',{
+            'staff': staff
+        })
+    })
 }
 main();
 
