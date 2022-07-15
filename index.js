@@ -43,6 +43,35 @@ async function main() {
             'staff': staff
         })
     })
+
+    app.get('/search', async function(req,res){
+
+        // define the 'get all results query'
+        let query = "SELECT * from actor WHERE 1";
+        let bindings = []
+
+
+        // if req.query.first_name is not falsely
+        // remember -- undefined, null, empty string, 0 ==> falsely
+        if (req.query.first_name) {
+            query += ` AND first_name LIKE ?`
+            bindings.push('%' + req.query.first_name + '%')
+        }
+
+        // if the last name is provided, then add it as part of the search
+        if (req.query.last_name) {
+            query += ` AND last_name LIKE ?`;
+            bindings.push('%' + req.query.last_name + '%')
+        }
+
+        console.log(query, bindings);
+        let [actors] = await connection.execute(query, bindings);
+
+        res.render('search',{
+            'actors':actors
+        })
+
+    })
 }
 main();
 
