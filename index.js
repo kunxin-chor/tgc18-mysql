@@ -1,8 +1,10 @@
 const express = require('express')
 const hbs = require('hbs');
 const wax = require('wax-on');
+require('dotenv').config();
 const mysql2 = require('mysql2/promise');  // to use await/async, we must
-                                          // use the promise version o f mysql2
+                                          // use the promise version of mysql2
+
 
 
 const app = express();
@@ -13,10 +15,10 @@ wax.setLayoutPath('./views/layouts')
 
 async function main() {
     const connection = await mysql2.createConnection({
-        'host': 'localhost',  // host -> ip address of the database server
-        'user': 'ahkow',
-        'database': 'sakila',
-        'password': 'rotiprata123'
+        'host': process.env.DB_HOST,  // host -> ip address of the database server
+        'user': process.env.DB_USER,
+        'database': process.env.DB_DATABASE,
+        'password': process.env.DB_PASSWORD
     })
   
     app.get('/actors', async function(req,res){
