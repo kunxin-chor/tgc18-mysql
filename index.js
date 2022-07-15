@@ -18,9 +18,22 @@ async function main() {
         'database': 'sakila',
         'password': 'rotiprata123'
     })
+  
+    app.get('/actors', async function(req,res){
+        // connection.execute returns an array of results
+        // the first element is the table that we selected
+        // the second element onwards are some housekeeping data
+        // the first element will be stored in actors variable
+        const [actors] = await connection.execute("SELECT * FROM actor");
 
-    await connection.execute("SELECT * FROM actor");
-    
+        // short form for:
+        // const results = await connection.execute("SELECT * FROM actor");
+        // const actors = results[0];
+        
+        res.render('actors.hbs',{
+            'actors': actors
+        })
+    })
 }
 main();
 
