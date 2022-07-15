@@ -29,5 +29,6 @@ project we will create a database user.
 
 ```
 CREATE USER 'ahkow'@'localhost' IDENTIFIED BY 'rotiprata123';
-GRANT ALL PRIVILEGES  on sakila.* TO 'ahkow'@'localhost' WITH GRANT OPTION;
+GRANT ALL PRIVILEGES on sakila.* TO 'ahkow'@'localhost' WITH GRANT OPTION;
+FLUSH PRIVILEGES;
 ```
