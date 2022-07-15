@@ -64,3 +64,4 @@ create table sessions (
     location_id mediumint unsigned not null,
     foreign key (location_id) references locations(location_id)
 ) engine = innodb;
+
