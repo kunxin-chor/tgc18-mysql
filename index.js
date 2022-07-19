@@ -1,6 +1,9 @@
 const express = require('express')
 const hbs = require('hbs');
 const wax = require('wax-on');
+require('handlebars-helpers')({
+    'handlebars': hbs.handlebars
+})
 require('dotenv').config();
 const mysql2 = require('mysql2/promise');  // to use await/async, we must
 // use the promise version of mysql2
@@ -25,7 +28,7 @@ async function main() {
         'password': process.env.DB_PASSWORD
     })
 
-    app.get('/error', async function(req,res){
+    app.get('/error', async function (req, res) {
         res.status(500);
         res.send("Something went wrong");
     })
@@ -96,12 +99,12 @@ async function main() {
         const query = "select * from actor where actor_id = ?";
         const [actors] = await connection.execute(query, [actorId]);
         const actorToUpdate = actors[0]; // since we are only expecting one result,we just take the first index
-        res.render('update_actor',{
+        res.render('update_actor', {
             'actor': actorToUpdate
         })
     })
 
-    app.post('/actors/:actor_id/update', async function(req,res){
+    app.post('/actors/:actor_id/update', async function (req, res) {
 
         if (req.body.first_name.length > 45 || req.body.last_name > 45) {
             res.status(400);
@@ -117,14 +120,14 @@ async function main() {
         res.redirect('/actors');
     })
 
-    app.post('/actors/:actor_id/delete', async function (req,res){
+    app.post('/actors/:actor_id/delete', async function (req, res) {
         const query = "DELETE FROM actor WHERE actor_id = ?";
         const bindings = [parseInt(req.params.actor_id)]
         await connection.execute(query, bindings);
         res.redirect('/actors');
     })
 
-    app.get('/categories', async function(req,res){
+    app.get('/categories', async function (req, res) {
         const query = "SELECT * FROM category ORDER BY name";
         const [categories] = await connection.execute(query);
         res.render('categories', {
@@ -132,11 +135,11 @@ async function main() {
         })
     })
 
-    app.get('/categories/create', async function(req,res){
+    app.get('/categories/create', async function (req, res) {
         res.render('create_category')
     })
 
-    app.post('/categories/create', async function(req,res){
+    app.post('/categories/create', async function (req, res) {
         let categoryName = req.body.name;
         if (categoryName.length <= 25) {
             const query = `INSERT INTO category (name) value (?)`
@@ -148,7 +151,7 @@ async function main() {
         }
     })
 
-    app.get('/categories/:category_id/update', async function(req,res){
+    app.get('/categories/:category_id/update', async function (req, res) {
         // retrieve the category that we want to update
         const query = "SELECT * from category where category_id = ?";
         const bindings = [parseInt(req.params.category_id)];
@@ -156,45 +159,107 @@ async function main() {
             const [categories] = await connection.execute(query, bindings);
             const category = categories[0];
             res.render('update_category', {
-                'category':category
+                'category': category
             })
-        } catch(e) {
+        } catch (e) {
 
         }
     })
 
-    app.post('/categories/:category_id/update', async function(req,res){
+    app.post('/categories/:category_id/update', async function (req, res) {
         try {
             const query = `UPDATE category SET name=? WHERE category_id = ?`;
             const bindings = [req.body.name, parseInt(req.params.category_id)]
             await connection.execute(query, bindings);
             res.redirect('/categories');
-        } catch(e) {
+        } catch (e) {
             console.log(e);
             res.redirect('/error')
         }
-     
+
     })
 
-    app.get('/categories/:category_id/delete', async function(req,res){
+    app.get('/categories/:category_id/delete', async function (req, res) {
         const query = "SELECT * from category where category_id = ?"
         const [categories] = await connection.execute(query, [parseInt(req.params.category_id)]);
-        const categoryToDelete = categories[0]; 
-        res.render('confirm_delete_category',{
+        const categoryToDelete = categories[0];
+        res.render('confirm_delete_category', {
             'category': categoryToDelete
         })
     })
 
-    app.post('/categories/:category_id/delete', async function(req,res){
-        
+    app.post('/categories/:category_id/delete', async function (req, res) {
+
         // find all the films which have category_id equal to the one that we are trying to delete
         const deleteQuery = "DELETE FROM film_category where category_id = ?";
         await connection.execute(deleteQuery, [parseInt(req.params.category_id)]);
-       
+
         const query = "DELETE FROM category where category_id = ?";
         const bindings = [parseInt(req.params.category_id)];
         await connection.execute(query, bindings);
         res.redirect('/categories');
+    })
+
+    app.get('/films/create', async function (req, res) {
+        const [languages] = await connection.execute(
+            "SELECT * FROM language"
+        );
+
+        res.render('create_film', {
+            languages: languages
+        })
+    })
+
+    app.get('/films', async function (req, res) {
+        const [films] = await connection.execute(`SELECT film_id, title, description, language.name AS 'language' FROM film 
+                                                  JOIN language 
+                                                  ON film.language_id = language.language_id`);
+
+        console.log(films);
+        res.render('films', {
+            films: films
+        })
+    })
+
+    app.post('/films/create', async function (req, res) {
+        /*
+        insert into film (title, description, language_id)
+               values ("The Lord of the Ring", "blah blah blah", 1);
+        */
+        await connection.execute(
+            `insert into film (title, description, language_id) values (?, ?, ?)`,
+            [req.body.title, req.body.description, parseInt(req.body.language_id), ]
+        );
+        res.redirect('/films');
+    })
+
+    app.get('/films/:film_id/update', async function (req, res) {
+        const [languages] = await connection.execute("SELECT * from language");
+        const [films] = await connection.execute("SELECT * from film where film_id = ?",
+            [parseInt(req.params.film_id)]);
+        const filmToUpdate = films[0];
+        res.render('update_film',{
+            'film':filmToUpdate,
+            'languages':languages
+        })
+
+    })
+
+    app.post('/films/:film_id/update', async function(req,res){
+        /* sample query:
+         update film set title="ASD ASD",
+                 description="ASD2 ASD2",
+                 language_id=3
+                WHERE film_id=1;
+        */
+       await connection.execute(
+        `UPDATE film SET title=?,
+                         description=?,
+                         language_id=?
+                         WHERE film_id=?`,
+        [req.body.title, req.body.description, parseInt(req.body.language_id), req.params.film_id]
+       );
+       res.redirect('/films');
     })
 }
 main();
