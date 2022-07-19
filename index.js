@@ -111,6 +111,13 @@ async function main() {
         await connection.execute(query, bindings);
         res.redirect('/actors');
     })
+
+    app.post('/actors/:actor_id/delete', async function (req,res){
+        const query = "DELETE FROM actor WHERE actor_id = ?";
+        const bindings = [parseInt(req.params.actor_id)]
+        await connection.execute(query, bindings);
+        res.redirect('/actors');
+    })
 }
 main();
 
