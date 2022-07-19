@@ -1,0 +1,22 @@
+{{#extends 'base'}}
+
+{{#block 'content'}}
+<h1>Categories</h1>
+
+<a href="/categories/create" class="btn btn-primary btn-sm my-3">Add New</a>
+
+<ul class="list-group">
+    {{#each categories}}
+    <li class="list-group-item">
+        {{this.name}}
+     
+        <a href="/categories/{{this.category_id}}/update" class="btn btn-primary btn-sm">Update</a>
+        <a href="/categories/{{this.category_id}}/delete" class="btn btn-danger btn-sm">Delete</a>
+
+    </li>
+    {{/each}}
+
+</ul>
+{{/block}}
+
+{{/extends}}
