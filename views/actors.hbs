@@ -7,6 +7,7 @@
             <th>Actor ID</th>
             <th>First Name</th>
             <th>Last Name</th>
+            <th></th>
         </tr>
     </thead>
     {{#each actors}}
@@ -14,6 +15,11 @@
             <td>{{this.actor_id}}</td>
             <td>{{this.first_name}}</td>
             <td>{{this.last_name}}</td>
+            <td>
+                <a class="btn btn-primary" href="/actors/{{this.actor_id}}/update">
+                    Update
+                </a>
+            </td>
         </tr>
     {{/each}}
 
