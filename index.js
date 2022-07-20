@@ -276,7 +276,7 @@ async function main() {
             [parseInt(req.params.film_id)]);
         const [actors] = await connection.execute("SELECT * from actor");
         const [currentActors] = await connection.execute("SELECT actor_id from film_actor where film_id =?", [req.params.film_id]);
-        const currentActorIds = currentActors.map( a => a.actor_id);
+        const currentActorIds = currentActors.map(a => a.actor_id);
         console.log(currentActorIds)
         const filmToUpdate = films[0];
 
@@ -296,7 +296,7 @@ async function main() {
                  language_id=3
                 WHERE film_id=1;
         */
-       // always update the row first
+        // always update the row first
         await connection.execute(
             `UPDATE film SET title=?,
                          description=?,
@@ -321,6 +321,61 @@ async function main() {
         }
 
         res.redirect('/films');
+    })
+
+    app.get('/customers', async function (req, res) {
+        const [customers] = await connection.execute("SELECT customer_id, first_name, last_name, email FROM customer");
+
+        res.render('customers', {
+            customers: customers
+        })
+    })
+
+    app.get('/customers/create', async function (req, res) {
+        // retrieve all the existing stores
+        const [stores] = await connection.execute("SELECT store.store_id, address.address FROM store JOIN address on store.address_id = address.address_id");
+        const [cities] = await connection.execute("SELECT * from city");
+        // show the customer a form for them enter their details and address
+        res.render('create_customer.hbs', {
+            'stores': stores,
+            'cities': cities
+        })
+    })
+
+    app.post('/customers/create', async function (req, res) {
+
+        try {
+            await connection.query("START TRANSACTION");
+            // 1. create the address first
+            const createAddressQuery = `INSERT INTO address (address, district, city_id, phone, location) VALUES (?,?,?,?,POINT(0.0000,90.0000))`;
+            const addressBindings = [
+                req.body.address,
+                req.body.district,
+                req.body.city_id,
+                req.body.phone
+            ]
+            const [results] = await connection.execute(createAddressQuery, addressBindings);
+
+            // 2. create the customer and provide the id of the address row that
+            // was created in step 1
+            const createCustomerQuery = `INSERT INTO customer (store_id, first_name, last_name, email, address_id) VALUES (?,?,?,?,?)`;
+            const customerBindings = [
+                req.body.store_id,
+                req.body.first_name,
+                req.body.last_name,
+                req.body.email,
+                results.insertId  // get the address_id of the address we have just created above
+            ]
+            console.log(customerBindings);
+            await connection.execute(createCustomerQuery, customerBindings);
+            await connection.query("COMMIT");
+            res.redirect('/customers')
+        } catch (e) {
+            await connection.query("ROLLBACK");
+            console.log(e);
+            res.redirect('/error');
+        }
+
     })
 }
 main();

@@ -1,0 +1,30 @@
+{{#extends 'base'}}
+
+{{#block 'content'}}
+<form method="POST">
+    <div>
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Customer ID</th>
+                    <th>First Name</th>
+                    <th>Last Name</th>
+                    <th>Email</th>
+                </tr>
+            </thead>
+            <tbody>
+            {{#each customers}}
+                <tr>
+                    <td>{{this.customer_id}}</td>
+                    <td>{{this.first_name}}</td>
+                    <td>{{this.last_name}}</td>
+                    <td>{{this.email}}</td>
+                </tr>
+            {{/each}}
+            </tbody>
+        </table>
+    </div>
+</form>
+{{/block}}
+
+{{/extends}}
