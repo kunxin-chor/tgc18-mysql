@@ -253,10 +253,19 @@ async function main() {
         /*
          insert into film_actor  (actor_id, film_id) values (2, 1002)
         */
+        // for (let actorId of actors) {
+        //     const bindings = [actorId, newFilmId];
+        //     await connection.execute(`insert into film_actor (actor_id, film_id) values (?, ?)`, bindings);
+        // }
+        let query = "INSERT INTO film_actor (actor_id, film_id) VALUES ";
+        const bindings = [];
         for (let actorId of actors) {
-            const bindings = [actorId, newFilmId];
-            await connection.execute(`insert into film_actor (actor_id, film_id) values (?, ?)`, bindings);
+            query += " (?,?),"
+            bindings.push(actorId, newFilmId);
         }
+        query = query.slice(0, -1); // omit the last comma
+        console.log(bindings);
+        await connection.execute(query, bindings);
 
         res.redirect('/films');
     })
