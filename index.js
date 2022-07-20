@@ -205,8 +205,13 @@ async function main() {
             "SELECT * FROM language"
         );
 
+        const [actors] = await connection.execute(
+            "SELECT * FROM actor"
+        );
+
         res.render('create_film', {
-            languages: languages
+            languages: languages,
+            actors: actors
         })
     })
 
@@ -215,21 +220,44 @@ async function main() {
                                                   JOIN language 
                                                   ON film.language_id = language.language_id`);
 
-        console.log(films);
+
         res.render('films', {
             films: films
         })
     })
 
     app.post('/films/create', async function (req, res) {
+
+        let actors = req.body.actors ? req.body.actors : [];
+        actors = Array.isArray(actors) ? actors : [actors];
+
+        // nested ternary expression
+        // let actors = req.body.actors ? 
+        //     (Array.isArray(req.body.actors) ? req.body.actors : [req.body.actors]) 
+        //     : [];
         /*
         insert into film (title, description, language_id)
                values ("The Lord of the Ring", "blah blah blah", 1);
         */
-        await connection.execute(
+
+        // 1. we have to create the row first
+        const [results] = await connection.execute(
             `insert into film (title, description, language_id) values (?, ?, ?)`,
-            [req.body.title, req.body.description, parseInt(req.body.language_id), ]
+            [req.body.title, req.body.description, parseInt(req.body.language_id),]
         );
+
+        const newFilmId = results.insertId;
+
+        // 2. then add in the relationship in the pivot table
+        // sample query:
+        /*
+         insert into film_actor  (actor_id, film_id) values (2, 1002)
+        */
+        for (let actorId of actors) {
+            const bindings = [actorId, newFilmId];
+            await connection.execute(`insert into film_actor (actor_id, film_id) values (?, ?)`, bindings);
+        }
+
         res.redirect('/films');
     })
 
@@ -237,29 +265,53 @@ async function main() {
         const [languages] = await connection.execute("SELECT * from language");
         const [films] = await connection.execute("SELECT * from film where film_id = ?",
             [parseInt(req.params.film_id)]);
+        const [actors] = await connection.execute("SELECT * from actor");
+        const [currentActors] = await connection.execute("SELECT actor_id from film_actor where film_id =?", [req.params.film_id]);
+        const currentActorIds = currentActors.map( a => a.actor_id);
+        console.log(currentActorIds)
         const filmToUpdate = films[0];
-        res.render('update_film',{
-            'film':filmToUpdate,
-            'languages':languages
+
+        res.render('update_film', {
+            'film': filmToUpdate,
+            'languages': languages,
+            'actors': actors,
+            'currentActors': currentActorIds
         })
 
     })
 
-    app.post('/films/:film_id/update', async function(req,res){
+    app.post('/films/:film_id/update', async function (req, res) {
         /* sample query:
          update film set title="ASD ASD",
                  description="ASD2 ASD2",
                  language_id=3
                 WHERE film_id=1;
         */
-       await connection.execute(
-        `UPDATE film SET title=?,
+       // always update the row first
+        await connection.execute(
+            `UPDATE film SET title=?,
                          description=?,
                          language_id=?
                          WHERE film_id=?`,
-        [req.body.title, req.body.description, parseInt(req.body.language_id), req.params.film_id]
-       );
-       res.redirect('/films');
+            [req.body.title, req.body.description, parseInt(req.body.language_id), req.params.film_id]
+        );
+
+        // update the M:M relationship
+        // update actors
+        // first remove all the actors from the film
+        await connection.execute("DELETE FROM film_actor WHERE film_id = ?", [req.params.film_id]);
+
+        // second re-add all the selected actors back to the film
+        let actors = req.body.actors ? req.body.actors : [];
+        actors = Array.isArray(actors) ? actors : [actors];
+        for (let actorId of actors) {
+            await connection.execute("INSERT INTO film_actor (film_id, actor_id) VALUES (?, ?)", [
+                parseInt(req.params.film_id),
+                actorId
+            ])
+        }
+
+        res.redirect('/films');
     })
 }
 main();
